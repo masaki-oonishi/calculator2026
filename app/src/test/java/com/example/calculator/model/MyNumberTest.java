@@ -1,9 +1,8 @@
-package com.example.calculator;
+package com.example.calculator.model;
 
 import static org.junit.Assert.assertEquals;
 
 import com.example.calculator.exception.CalculatorIllegalArgumentException;
-import com.example.calculator.model.MyNumber;
 
 import org.junit.Test;
 

@@ -1,10 +1,9 @@
-package com.example.calculator;
+package com.example.calculator.engine;
 
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-import com.example.calculator.engine.Calculator;
 import com.example.calculator.model.MyNumber;
 
 public class CalculatorTest {

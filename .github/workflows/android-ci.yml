@@ -1,0 +1,33 @@
+name: Android CI
+
+# トリガー：main（またはmaster）ブランチへのプッシュ、およびプルリクエスト時に自動実行
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. リポジトリのコードを仮想環境にチェックアウト
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Java環境（JDK 17）のセットアップ（依存関係のキャッシュ機能付き）
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      # 3. gradlew（Gradleラッパー）に実行権限を付与
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # 4. ローカルユニットテストの実行（MyNumberTestなどが一斉に走ります）
+      - name: Run Unit Tests
+        run: ./gradlew testDebugUnitTest

@@ -1,28 +1,23 @@
 package com.example.calculator.model;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.List;
 
 public class HistoryManager {
-    private final List<CalculationMemento> historyList = new ArrayList<>();
+    private final int MAX_HISTORY_COUNT = 10;
+    private final Deque<CalculationMemento> history = new ArrayDeque<>();
 
     public void addHistory(CalculationMemento memento){
-        historyList.add(memento);
-    }
-
-    public CalculationMemento getHistoryAt(int index){
-        if(index < 0 || index >= historyList.size()){
-            return null;
+        history.addLast(memento);
+        if(history.size() > MAX_HISTORY_COUNT){
+            history.removeFirst();
         }
-        return historyList.get(index);
     }
 
     public List<CalculationMemento> getAllHistory(){
-        return Collections.unmodifiableList(historyList);
-    }
-
-    public void clearAll(){
-        historyList.clear();
+        return List.copyOf(history);
     }
 }

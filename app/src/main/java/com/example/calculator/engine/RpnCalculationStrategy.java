@@ -68,15 +68,11 @@ public class RpnCalculationStrategy implements CalculationStrategy {
 
         while (tokenizer.hasNext()) {
             Token token = tokenizer.nextToken();
-//            System.out.println(token);
 
             if (token instanceof NumberToken) {
                 double value = ((NumberToken) token).getValue();
                 MyNumber myNumber = MyNumber.parseToMyNumber(value);
                 valueStack.push(myNumber);
-
-//                NumberToken numToken = (NumberToken) token;
-//                System.out.println("[Operand (数値)] : " + numToken.getValue());
 
             } else if (token.getType() == Token.TOKEN_PARENTHESES_OPEN) {
                 operatorStack.push(MyOperator.PAREN_OPEN);
@@ -118,9 +114,6 @@ public class RpnCalculationStrategy implements CalculationStrategy {
 
                 operatorStack.push(currentOp);
 
-//                OperatorToken opToken = (OperatorToken) token;
-//                System.out.println("[Operator (演算子)] : " + opToken.getOperator().getSymbol()
-//                        + " (優先度: " + opToken.getOperator()+ ")");
             }
 
             previousToken = token;

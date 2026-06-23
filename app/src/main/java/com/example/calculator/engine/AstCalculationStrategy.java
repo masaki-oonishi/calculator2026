@@ -97,15 +97,9 @@ public class AstCalculationStrategy implements CalculationStrategy {
         }
 
         private boolean eatOperator(String expectedSymbol){
-//            System.out.println(token.getType());
-//            System.out.println(expectedSymbol);
-//            OperatorToken opToken2 = (OperatorToken) token;
-//
-//                    + " (優先度: " + opToken2.getOperator()+ ")");
             if(token instanceof OperatorToken){
                 OperatorToken opToken = (OperatorToken) token;
                 String actualSymbol = opToken.getOperator().getSymbol();
-//                System.out.println("[Operator (演算子)] : " + actualSymbol);
 
                 if(actualSymbol.equals(expectedSymbol)){
                     nextToken();

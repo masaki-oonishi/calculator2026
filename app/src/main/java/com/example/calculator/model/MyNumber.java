@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import com.example.calculator.exception.CalculatorIllegalArgumentException;
 
 import java.math.BigInteger;
+import java.text.DecimalFormat;
 
 public class MyNumber {
     // ==========================================
@@ -137,6 +138,7 @@ public class MyNumber {
             BigInteger divisorBig = BigInteger.TEN.pow(exponent.getScale());
             BigInteger expValBig = BigInteger.valueOf(exponent.getValue());
 
+            // remainderは余りを求める
             if(expValBig.remainder(divisorBig).compareTo(BigInteger.ZERO) == 0){
                 exp = safeLongValue(expValBig.divide(divisorBig));
             } else {
@@ -204,11 +206,10 @@ public class MyNumber {
     }
 
     public static MyNumber parseToMyNumber(double d) {
-        String s = String.valueOf(d);
-
-        if(s.endsWith(".0")){
-            s = s.substring(0, s.length() - 2);
-        }
+        // 指数表記(E-6など)を禁止し、無駄な末尾の0をつけないフォーマッター
+        // '#'を18個並べることで、double型の有効桁数（約15〜17桁）を完全にカバー
+        DecimalFormat df = new DecimalFormat("#.##################");
+        String s = df.format(d);
 
         long value;
         int scale;

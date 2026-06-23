@@ -29,7 +29,6 @@ public class CalculatorViewModel extends ViewModel {
     public void clearExpression() { currentExpression.setLength(0); }
 
     public MyNumber getLastResult() { return lastResult; }
-    public void setLastResult(MyNumber result) { this.lastResult = result; }
 
     public boolean isLastActionEquals() { return isLastActionEquals; }
     public void setLastActionEquals(boolean isEquals) { this.isLastActionEquals = isEquals; }
@@ -47,10 +46,6 @@ public class CalculatorViewModel extends ViewModel {
 
     public MyNumber evaluateConstant(MyNumber previousResult) {
         return calculator.evaluateConstant(previousResult);
-    }
-
-    public void clearConstant() {
-        calculator.clearConstant();
     }
 
     public void executeEquals(){
@@ -83,8 +78,10 @@ public class CalculatorViewModel extends ViewModel {
     }
 
     public void restoreHistoryAt(int index){
-        CalculationMemento memento = historyManager.getHistoryAt(index);
-        if(memento == null) return;
+        List<CalculationMemento> historyList = historyManager.getAllHistory();
+        if(index < 0 || index >= historyList.size()) return;
+
+        CalculationMemento memento = historyList.get(index);
 
         this.currentExpression.setLength(0);
         this.currentExpression.append(memento.getExpression());
