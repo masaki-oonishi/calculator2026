@@ -105,4 +105,11 @@ public class CalculatorViewModel extends ViewModel {
         this.isLastActionEquals = false;
         this.calculator.clearConstant();
     }
+
+    public void executeClear(){
+        int length = currentExpression.length();
+        if(!(length == 0)){
+            currentExpression.deleteCharAt(length - 1);
+        }
+    }
 }

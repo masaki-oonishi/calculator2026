@@ -91,7 +91,15 @@ public class MainActivity extends AppCompatActivity {
             });
         }
 
-        findViewById(R.id.btn_ac).setOnClickListener(v -> performAllClear());
+        Button btnClear = findViewById(R.id.btn_ac);
+        findViewById(R.id.btn_ac).setOnClickListener(v -> {
+            if(btnClear.getText().toString().equals("AC")){
+                performAllClear();
+            }
+            else{
+                performClear();
+            }
+        });
 
         findViewById(R.id.btn_equals).setOnClickListener(v -> {
             Runtime runtime = Runtime.getRuntime();
@@ -189,14 +197,27 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateDisplay() {
         tvExpression.setText(viewModel.getCurrentExpression());
+
+        Button btnClear = findViewById(R.id.btn_ac);
+
+        if(viewModel.getCurrentExpression().isEmpty() || viewModel.isLastActionEquals()){
+            btnClear.setText("AC");
+        }
+        else{
+            btnClear.setText("C");
+        }
     }
 
     private void performAllClear(){
         viewModel.executeAllClear();
-
         updateDisplay();
         tvResult.setText(getString(R.string.default_result));
         tvStats.setText(getString(R.string.default_stats));
+    }
+
+    private void performClear() {
+        viewModel.executeClear();
+        updateDisplay();
     }
 
     private boolean isOperator(String text) {
