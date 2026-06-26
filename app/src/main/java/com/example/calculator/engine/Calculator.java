@@ -26,4 +26,6 @@ public class Calculator {
     public void clearConstant(){
         strategy.clearConstant();
     }
+
+    public String getLastConstantExpressionSnippet() { return strategy.getLastConstantExpressionSnippet(); }
 }

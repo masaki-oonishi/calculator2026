@@ -3,6 +3,7 @@
 
     <string name="default_result">0</string>
     <string name="default_stats">Time: 0.0 ms | Mem: 0 KB</string>
+    <string name="history_title">計算履歴</string>
     <string name="engine_ast">Engine: AST</string>
     <string name="engine_rpn">Engine: RPN</string>
 

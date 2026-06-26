@@ -17,4 +17,6 @@ public interface CalculationStrategy {
      * 必要に応じて、記憶された定数実行データをクリア（ACボタン用など）。
      */
     void clearConstant();
+
+    String getLastConstantExpressionSnippet();
 }

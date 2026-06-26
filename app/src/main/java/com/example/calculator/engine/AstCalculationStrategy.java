@@ -1,5 +1,7 @@
 package com.example.calculator.engine;
 
+import androidx.annotation.NonNull;
+
 import com.example.calculator.exception.CalculatorIllegalArgumentException;
 import com.example.calculator.model.MyNumber;
 
@@ -11,7 +13,7 @@ import net.objecthunter.exp4j.tokenizer.Tokenizer;
 import java.util.Collections;
 
 public class AstCalculationStrategy implements CalculationStrategy {
-    private BinaryNode lastBinaryNodeTemplate = null;
+    private MyOperator lastBinaryNodeTemplate = null;
     private MyNumber lastConstantValue = null;
     private interface Expression {
         MyNumber eval();
@@ -22,6 +24,9 @@ public class AstCalculationStrategy implements CalculationStrategy {
         private NumberNode(MyNumber value) { this.value = value; };
         @Override
         public MyNumber eval(){ return this.value; };
+
+        @NonNull
+        public String toString(){ return value.toString(); };
     }
 
     private static class UnaryMinusNode implements Expression {
@@ -32,52 +37,26 @@ public class AstCalculationStrategy implements CalculationStrategy {
         public MyNumber eval() { return this.child.eval().unaryMinus(); };
     }
 
-    private abstract static class BinaryNode implements Expression {
-        protected final Expression left;
-        protected final Expression right;
+    private static class BinaryNode implements Expression {
+        private final Expression left;
+        private final Expression right;
+        private final MyOperator operator;
 
-        protected BinaryNode(Expression left, Expression right){
+        private BinaryNode(Expression left, Expression right, MyOperator operator){
             this.left = left;
             this.right = right;
+            this.operator = operator;
         }
 
         @Override
         public MyNumber eval(){
-            return calculate(left.eval(), right.eval());
+            return operator.apply(left.eval(), right.eval());
         }
 
-        public abstract MyNumber calculate(MyNumber leftVal, MyNumber rightVal);
-    }
-
-    private static class AddNode extends BinaryNode {
-        protected AddNode(Expression left, Expression right){ super(left, right); };
         @Override
-        public MyNumber calculate(MyNumber l, MyNumber r){ return l.add(r); };
-
-    }
-
-    private static class SubtractNode extends BinaryNode {
-        private SubtractNode(Expression left, Expression right){ super(left, right); };
-        @Override
-        public MyNumber calculate(MyNumber l, MyNumber r) { return l.subtract(r); };
-    }
-
-    private static class MultiplyNode extends BinaryNode {
-        private MultiplyNode(Expression left, Expression right){ super(left, right); };
-        @Override
-        public MyNumber calculate(MyNumber l, MyNumber r) { return l.multiply(r); };
-    }
-
-    private static class DivideNode extends BinaryNode {
-        private DivideNode(Expression left, Expression right) { super(left, right); };
-        @Override
-        public MyNumber calculate(MyNumber l, MyNumber r) { return l.divide(r); };
-    }
-
-    private static class PowNode extends BinaryNode {
-        private PowNode(Expression left, Expression right) { super(left, right); };
-        @Override
-        public MyNumber calculate(MyNumber l, MyNumber r) { return l.pow(r); };
+        public String toString(){
+            return operator.toString();
+        }
     }
 
     private static class AstParser {
@@ -143,7 +122,7 @@ public class AstCalculationStrategy implements CalculationStrategy {
             Expression x = parseFactor();
 
             if(eatOperator("^")){
-                x = new PowNode(x, parsePower());
+                x = new BinaryNode(x, parsePower(), MyOperator.POW);
             }
 
             return x;
@@ -152,8 +131,8 @@ public class AstCalculationStrategy implements CalculationStrategy {
         private Expression parseTerm(){
             Expression x = parsePower();
             for(;;){
-                if(eatOperator("*")) x = new MultiplyNode(x, parsePower());
-                else if(eatOperator("/")) x = new DivideNode(x, parsePower());
+                if(eatOperator("*")) x = new BinaryNode(x, parsePower(), MyOperator.MULTIPLY);
+                else if(eatOperator("/")) x = new BinaryNode(x, parsePower(), MyOperator.DIVIDE);
                 else return x;
             }
         }
@@ -175,8 +154,8 @@ public class AstCalculationStrategy implements CalculationStrategy {
 //            Expression x = parseTerm();
 
             for(;;){
-                if(eatOperator("+")) x = new AddNode(x, parseTerm());
-                else if(eatOperator("-")) x = new SubtractNode(x, parseTerm());
+                if(eatOperator("+")) x = new BinaryNode(x, parseTerm(), MyOperator.ADD);
+                else if(eatOperator("-")) x = new BinaryNode(x, parseTerm(), MyOperator.SUBTRACT);
                 else return x;
             }
         }
@@ -193,14 +172,21 @@ public class AstCalculationStrategy implements CalculationStrategy {
         AstParser parser = new AstParser(expression);
         Expression rootNode = parser.parse();
 
-        if (rootNode instanceof BinaryNode) {
-            BinaryNode binaryRoot = (BinaryNode) rootNode;
-
-            this.lastBinaryNodeTemplate = binaryRoot;
-            this.lastConstantValue = binaryRoot.right.eval();
+        // BinaryNode以外（数式が「5」だけの場合など）は、通常通り評価して返す
+        if(!(rootNode instanceof BinaryNode)) {
+            return rootNode.eval();
         }
 
-        return rootNode.eval();
+        BinaryNode binaryRoot = (BinaryNode) rootNode;
+
+        this.lastBinaryNodeTemplate = binaryRoot.operator;
+
+        MyNumber leftVal = binaryRoot.left.eval();
+        MyNumber rightVal = binaryRoot.right.eval();
+
+        this.lastConstantValue = rightVal;
+
+        return binaryRoot.operator.apply(leftVal, rightVal);
     }
 
     @Override
@@ -209,12 +195,25 @@ public class AstCalculationStrategy implements CalculationStrategy {
             return previousResult;
         }
 
-        return lastBinaryNodeTemplate.calculate(previousResult, lastConstantValue);
+        return lastBinaryNodeTemplate.apply(previousResult, lastConstantValue);
     }
 
     @Override
     public void clearConstant(){
         this.lastBinaryNodeTemplate = null;
         this.lastConstantValue = null;
+    }
+
+    @Override
+    public String getLastConstantExpressionSnippet() {
+        // 定数データがまだ無い場合は空文字を返す
+        if (lastBinaryNodeTemplate == null || lastConstantValue == null) {
+            return "";
+        }
+
+        String operator = lastBinaryNodeTemplate.toString();
+        String constant = lastConstantValue.toString();
+
+        return operator + constant;
     }
 }

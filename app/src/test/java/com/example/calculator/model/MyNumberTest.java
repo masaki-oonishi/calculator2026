@@ -69,33 +69,35 @@ public class MyNumberTest {
     /**
      * 初期入力などで標準精度（9桁）を超える数値が渡されて足し算をした場合、
      * 計算結果が自動的に9桁に切り捨て丸めされるかを検証します。
+     * ★修正点: 計算結果が0に丸め込まれるため、新仕様に従いscaleは0、表示は"0"になります。
      */
     @Test
     public void testAdd_shouldRoundDownWhenResultExceedsDefaultPrecision() {
         // 0.00000000005 (scale: 11) + 0.00000000005 (scale: 11) = 0.00000000010 (scale: 11)
-        // これが標準精度の9桁に丸め込まれると、小数点以下10桁目以降が切り捨てられて 0.000000000 になる
+        // これが標準精度の9桁に丸め込まれると、小数点以下10桁目以降が切り捨てられて「完全に0」になる
         MyNumber n1 = new MyNumber(5, 11);
         MyNumber n2 = new MyNumber(5, 11);
         MyNumber result = n1.add(n2);
 
-        assertEquals(MyNumber.DEFAULT_PRECISION, result.getScale());
-        assertEquals("0.000000000", result.toString());
+        assertEquals(0, result.getScale());
+        assertEquals("0", result.toString());
     }
 
     /**
      * 引き算において、標準精度（9桁）を超えるスケールが流れてきた場合、
      * 計算の出口で自動的に9桁に切り捨て丸めされるかを検証します。
+     * ★修正点: 計算結果が0に丸め込まれるため、新仕様に従いscaleは0、表示は"0"になります。
      */
     @Test
     public void testSubtract_shouldRoundDownWhenResultExceedsDefaultPrecision() {
         // 0.00000000009 (scale: 11) - 0.00000000001 (scale: 11) = 0.00000000008 (scale: 11)
-        // 9桁に丸め込まれることで、小数点以下11桁目の「8」が切り落とされて 0.000000000 になる
+        // 9桁に丸め込まれることで、小数点以下11桁目の「8」が切り落とされて「完全に0」になる
         MyNumber n1 = new MyNumber(9, 11);
         MyNumber n2 = new MyNumber(1, 11);
         MyNumber result = n1.subtract(n2);
 
-        assertEquals(MyNumber.DEFAULT_PRECISION, result.getScale());
-        assertEquals("0.000000000", result.toString());
+        assertEquals(0, result.getScale());
+        assertEquals("0", result.toString());
     }
 
     /**
@@ -124,19 +126,20 @@ public class MyNumberTest {
     }
 
     /**
-     * 掛け算の累積（または定数連打）によって合計スケールが標準精度（9桁）を超えた場合、
+     * 掛け算の累積によって合計スケールが標準精度（9桁）を超えた場合、
      * 内部で自動的に9桁に丸め込まれ、無限のスケール肥大化が完全に防止されるかを検証します。
+     * ★修正点: 計算結果が0に丸め込まれるため、新仕様に従いscaleは0、表示は"0"になります。
      */
     @Test
     public void testMultiply_shouldRoundDownWhenScaleExceedsDefaultPrecision() {
         // 0.00001 (scale: 5) * 0.00001 (scale: 5) = 0.0000000001 (本来はscale: 10)
-        // 共通メソッドにより、10桁目の「1」が切り捨てられて 0.000000000 (scale: 9) になる
+        // 共通メソッドにより、10桁目の「1」が切り捨てられて「完全に0」になる
         MyNumber n1 = new MyNumber(1, 5);
         MyNumber n2 = new MyNumber(1, 5);
         MyNumber result = n1.multiply(n2);
 
-        assertEquals(MyNumber.DEFAULT_PRECISION, result.getScale());
-        assertEquals("0.000000000", result.toString());
+        assertEquals(0, result.getScale());
+        assertEquals("0", result.toString());
     }
 
     /**
@@ -251,5 +254,31 @@ public class MyNumberTest {
     public void testParseToMyNumber_withIntegerEquivalentDouble() {
         MyNumber parsed = MyNumber.parseToMyNumber(5.0);
         assertEquals("5", parsed.toString());
+    }
+
+    // ==========================================
+    // 6. Zero Value Specification Tests (★新規追加)
+    // ==========================================
+
+    /**
+     * 値が0の場合、インスタンス生成時やパース時にscaleが強制的に0になり、
+     * "0" という純粋な文字列が返るという「0の特別仕様」を厳格に検証します。
+     */
+    @Test
+    public void testZero_shouldAlwaysHaveZeroScale() {
+        // ① コンストラクタで敢えて大きなscaleを指定しても、内部で0に補正されるか
+        MyNumber zeroWithScale = new MyNumber(0, 5);
+        assertEquals(0, zeroWithScale.getScale());
+        assertEquals("0", zeroWithScale.toString());
+
+        // ② パースメソッドから 0.0 を読み込んだ際も、scaleが0として最適化されるか
+        MyNumber parsedZero = MyNumber.parseToMyNumber(0.0);
+        assertEquals(0, parsedZero.getScale());
+        assertEquals("0", parsedZero.toString());
+
+        // ③ 負のゼロ (-0.0) が流れ込んできた場合も、正の "0" (scale:0) に正規化されるか
+        MyNumber negativeZero = MyNumber.parseToMyNumber(-0.0);
+        assertEquals(0, negativeZero.getScale());
+        assertEquals("0", negativeZero.toString());
     }
 }

@@ -1,7 +1,5 @@
 package com.example.calculator.model;
 
-import android.service.credentials.BeginGetCredentialOption;
-
 import androidx.annotation.NonNull;
 
 import com.example.calculator.exception.CalculatorIllegalArgumentException;
@@ -21,12 +19,18 @@ public class MyNumber {
 
     /** long型が物理的に表現できる最大の桁数（これ以上のスケールはlongに収まらない） */
     private static final int MAX_SCALE_LIMIT = 19;
-    private final long value;
-    private final int scale;
+    private final long value; //整数値
+    private final int scale; //小数点以下の桁数（スケール）
 
     public MyNumber(long value, int scale){
-        this.value = value; //整数値
-        this.scale = scale; //小数点以下の桁数（スケール）
+        if (value == 0) {
+            this.value = 0;
+            this.scale = 0;
+        }
+        else {
+            this.value = value;
+            this.scale = scale;
+        }
     }
 
     public long getValue() { return value; }
@@ -40,7 +44,6 @@ public class MyNumber {
         // Javaの Math.abs(long) は、最小値（Long.MIN_VALUE）を入れたときだけ、
         // プラスに反転できずにマイナスのまま返す
         // （対になるプラスの最大値より、マイナスの最小値の方が1だけ絶対値が大きいため、オーバーフローが発生）
-        // StringBuilder s = new StringBuilder(String.valueOf(Math.abs(value)));
         String valueStr = String.valueOf(value);
         if (value < 0) {
             valueStr = valueStr.substring(1); // 先頭の "-" を削る
@@ -58,8 +61,8 @@ public class MyNumber {
         int maxScale = Math.max(this.scale, other.scale);
 
         try{
-              // Math.powは内部がdouble型なので誤差が生じる、
-              // そのため、整数で計算できるBigIntegerを使う
+            // Math.powは内部がdouble型なので誤差が生じる、
+            // そのため、整数で計算できるBigIntegerを使う
             BigInteger v1 = BigInteger.valueOf(this.value)
                     .multiply(BigInteger.TEN.pow(maxScale - this.scale));
             BigInteger v2 = BigInteger.valueOf(other.value)
@@ -101,7 +104,6 @@ public class MyNumber {
         catch(ArithmeticException e){
             throw new CalculatorIllegalArgumentException("計算結果が大きすぎて処理できません（オーバーフロー）");
         }
-
     }
 
     public MyNumber divide(MyNumber other){
@@ -132,6 +134,7 @@ public class MyNumber {
             exp = exponent.getValue();
         }
         else{
+            //入力された数字: 1.0000000000000000000 （小数位が19桁） value = 1 * 10^{19} scale = 19
             if (exponent.getScale() >= MAX_SCALE_LIMIT) {
                 throw new CalculatorIllegalArgumentException("累乗の指数が精密すぎて処理できません");
             }
@@ -189,7 +192,7 @@ public class MyNumber {
         BigInteger maxLong = BigInteger.valueOf(Long.MAX_VALUE);
 
         if(bi.compareTo(minLong) < 0 || bi.compareTo(maxLong) > 0){
-            throw new ArithmeticException("Long integer overflow");
+            throw new ArithmeticException("Long型で扱える数値を超えました");
         }
 
         return bi.longValue();
@@ -207,7 +210,7 @@ public class MyNumber {
 
     public static MyNumber parseToMyNumber(double d) {
         // 指数表記(E-6など)を禁止し、無駄な末尾の0をつけないフォーマッター
-        // '#'を18個並べることで、double型の有効桁数（約15〜17桁）を完全にカバー
+        // '#'を18個並べることで、double型の有効桁数（約15〜17桁）を完全にカバーし、scaleを最大18桁に制限（Longの限界）
         DecimalFormat df = new DecimalFormat("#.##################");
         String s = df.format(d);
 

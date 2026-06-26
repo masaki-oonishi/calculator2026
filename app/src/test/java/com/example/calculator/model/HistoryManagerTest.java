@@ -5,8 +5,6 @@ import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.example.calculator.engine.EngineType;
-
 public class HistoryManagerTest {
 
     private HistoryManager historyManager;
@@ -21,7 +19,7 @@ public class HistoryManagerTest {
         // 1. 最大件数（10件）を超える「11件」の履歴を追加する
         for (int i = 1; i <= 11; i++) {
             MyNumber result = MyNumber.parseToMyNumber(i);
-            CalculationMemento memento = new CalculationMemento("1+" + i, result, EngineType.AST);
+            CalculationMemento memento = new CalculationMemento("1+" + i, result);
             historyManager.addHistory(memento);
         }
 
@@ -38,7 +36,7 @@ public class HistoryManagerTest {
 
     @Test(expected = UnsupportedOperationException.class)
     public void testGetAllHistory_IsUnmodifiable() {
-        CalculationMemento memento = new CalculationMemento("1+1", MyNumber.parseToMyNumber(2), EngineType.AST);
+        CalculationMemento memento = new CalculationMemento("1+1", MyNumber.parseToMyNumber(2));
         historyManager.addHistory(memento);
 
         // 外部から取得したリストに対して直接要素を追加しようとしたとき、

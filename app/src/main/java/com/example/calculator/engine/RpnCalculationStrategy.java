@@ -1,5 +1,7 @@
 package com.example.calculator.engine;
 
+import androidx.annotation.NonNull;
+
 import com.example.calculator.exception.CalculatorIllegalArgumentException;
 import com.example.calculator.model.MyNumber;
 
@@ -15,41 +17,6 @@ import java.util.Deque;
 public class RpnCalculationStrategy implements CalculationStrategy {
     private MyOperator lastConstantOp = null;
     private MyNumber lastConstantValue = null;
-
-    enum MyOperator{
-        // 開きカッコを優先度0（一番低い）として定義
-        // これにより、通常の演算子が来ても、開きカッコを勝手にポップして計算してしまうのを防げる
-        PAREN_OPEN(0, 1),
-        ADD(1, 2){ @Override MyNumber apply(MyNumber a, MyNumber b) { return a.add(b); } },
-        SUBTRACT(1, 2){ @Override MyNumber apply(MyNumber a, MyNumber b) { return a.subtract(b); } },
-        MULTIPLY(2, 2){ @Override MyNumber apply(MyNumber a, MyNumber b) { return a.multiply(b); } },
-        DIVIDE( 2, 2){ @Override MyNumber apply(MyNumber a, MyNumber b) { return a.divide(b); } },
-        POW(4, 2){ @Override MyNumber apply(MyNumber a, MyNumber b) { return a.pow(b); }},
-        UNARY_MINUS(3, 1) { @Override MyNumber apply(MyNumber a, MyNumber b) { return b.unaryMinus(); }};
-
-        //　計算の優先順位を定義
-        final int priority;
-        // 数値を１つしか使わない演算子を実装する場合に必要
-        final int numOperands;
-        MyOperator(int priority, int numOperands){
-            this.priority = priority;
-            this.numOperands = numOperands;
-        }
-
-        //パッケージprivate
-        MyNumber apply(MyNumber a, MyNumber b) { return null; }
-
-        static MyOperator fromSymbol(String symbol){
-            switch(symbol){
-                case "+": return ADD;
-                case "-": return SUBTRACT;
-                case "*": return MULTIPLY;
-                case "/": return DIVIDE;
-                case "^": return POW;
-                default: throw new IllegalArgumentException("未対応の演算子:" + symbol);
-            }
-        }
-    }
 
     /**
      *
@@ -180,5 +147,17 @@ public class RpnCalculationStrategy implements CalculationStrategy {
     public void clearConstant() {
         this.lastConstantOp = null;
         this.lastConstantValue = null;
+    }
+
+    @Override
+    public String getLastConstantExpressionSnippet() {
+        if (lastConstantOp == null || lastConstantValue == null) {
+            return "";
+        }
+
+        String operator = lastConstantOp.toString();
+        String constant = lastConstantValue.toString();
+
+        return operator + constant;
     }
 }

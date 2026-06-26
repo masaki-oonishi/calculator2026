@@ -19,15 +19,6 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical">
-
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/switch_algorithm"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/engine_ast"
-                android:textColor="#888888"
-                android:textSize="14sp" />
-
             <Space
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -38,21 +29,12 @@
                 style="?android:attr/borderlessButtonStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="HISTORY"
+                android:text="@string/history_title"
                 android:textColor="#1976D2"
                 android:minHeight="0dp"
                 android:minWidth="0dp"
                 android:padding="8dp"
                 android:backgroundTint="@color/btn_numeric_selector" />
-
-            <TextView
-                android:id="@+id/tv_stats"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/default_stats"
-                android:textColor="#1976D2"
-                android:textSize="12sp"
-                android:fontFamily="monospace" />
         </LinearLayout>
 
         <LinearLayout
