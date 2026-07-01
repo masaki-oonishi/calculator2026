@@ -281,4 +281,81 @@ public class MyNumberTest {
         assertEquals(0, negativeZero.getScale());
         assertEquals("0", negativeZero.toString());
     }
+
+    // ==========================================
+    // 7. Hardware & Type Limit Edge Cases (★新規追加)
+    // ==========================================
+
+    /**
+     * 有効桁数15桁を超える巨大な整数を実数としてパースした際、
+     * エラーを投げずに「double型の精度限界によるサイレントな丸め誤差」を
+     * 容認したままパースを完了するシステム仕様（仕様書⑭のケース2）を検証します。
+     * double 型は、64ビットのメモリを以下の3つの役割に明確に分担させて数字を表現しています。
+     * 符号部（1ビット）：プラスかマイナスか
+     * 指数部（11ビット）：小数点の位置（10の何乗にするか。これで308乗などの巨大なスケールを生み出す）
+     * 仮数部（52ビット）：数字の並びそのもの（ここが有効桁数 15〜17桁 の正体）
+     * 元のデータ: [101101101...（合計57ビット）...1110]
+     *                                           ↓↓↓
+     * 格納バケツ: [101101101...（合計53ビットまで）] [切り捨て・丸め]
+     */
+    @Test
+    public void testParseToMyNumber_silentRoundingOfHugeDigits() {
+        // ユーザーが画面で「123456789012345678」（18桁）を入力したと想定
+        double input = 123456789012345678.0;
+
+        // パースを呼び出す（内部でdoubleの仮数部限界により末尾が '80' に丸め込まれる）
+        MyNumber parsed = MyNumber.parseToMyNumber(input);
+
+        // エラーにならずに通過し、丸め込まれた近似値の状態で保持されていることを確認
+        assertEquals("123456789012345680", parsed.toString());
+    }
+
+    /**
+     * Long型のマイナス限界値（Long.MIN_VALUE）を実数としてパースした際、
+     * double型としては正確に保持されるものの、DecimalFormatによる10進数文字列化の過程で
+     * 床（Longの下限値）を下に突き抜けてアンダーフローとなり、
+     * 安全にビジネス例外がスローされる挙動（仕様書⑭のケース1）を検証します。
+     */
+    @Test
+    public void testParseToMyNumber_shouldThrowExceptionOnLongMinValueUnderflow() {
+        // -9223372036854775808 は -2^63 のため double にキャストした瞬間は無傷
+        double longMinValueAsDouble = (double) Long.MIN_VALUE;
+
+        try {
+            // パース実行（内部で "-9223372036854776000" に丸められ下限を突破する）
+            MyNumber.parseToMyNumber(longMinValueAsDouble);
+            org.junit.Assert.fail("Longの限界床を突き抜けたため、例外が発生しなければなりません");
+        } catch (CalculatorIllegalArgumentException e) {
+            // 期待通りの安全装置（ビジネス例外）が作動したことを確認
+            assertEquals("入力された数値が大きすぎます（桁あふれ）", e.getMessage());
+        }
+    }
+
+    /**
+     * 内部計算などの結果、奇跡的にLong型のマイナス最小値に到達した場合、
+     * toString()の内部に仕込まれた文字列ハック（Math.absを使わない符号反転回避）により、
+     * クラッシュせずに安全に表示文字列を出力できるかを検証します。
+     */
+    @Test
+    public void testToString_safeWithLongMinValue() {
+        // 内部状態として Long.MIN_VALUE を持つインスタンスを擬似的に用意
+        MyNumber n = new MyNumber(Long.MIN_VALUE, 0);
+
+        // Math.abs(Long.MIN_VALUE) のオーバーフローに嵌ることなく、正確に表示できるか
+        assertEquals("-9223372036854775808", n.toString());
+    }
+
+    /**
+     * 画面にLong型のマイナス最小値が表示されている状態から「符号反転ボタン (+/-)」を押した場合、
+     * 対になるプラスの表現限界（Long.MAX_VALUE）を「1」だけオーバーフローするため、
+     * 計算段階で安全にブロックされる挙動（仕様書番号⑳）を検証します。
+     */
+    @Test(expected = CalculatorIllegalArgumentException.class)
+    public void testUnaryMinus_shouldThrowExceptionOnLongMinValueNegation() {
+        // 画面が「-9223372036854775808」の状態
+        MyNumber n = new MyNumber(Long.MIN_VALUE, 0);
+
+        // 符号反転ボタンを押す（内部計算で +9223372036854775808 になり、MAX_VALUE...807 を超える）
+        n.unaryMinus();
+    }
 }
